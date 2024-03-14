@@ -10,7 +10,7 @@ void *Alloc(size_t sz)
 	extraMemoryAllocated += sz;
 	size_t* ret = malloc(sizeof(size_t) + sz);
 	*ret = sz;
-	printf("Extra memory allocated, size: %ld\n", sz);
+	//printf("Extra memory allocated, size: %ld\n", sz);
 	return &ret[1];
 }
 
@@ -18,7 +18,7 @@ void DeAlloc(void* ptr)
 {
 	size_t* pSz = (size_t*)ptr - 1;
 	extraMemoryAllocated -= *pSz;
-	printf("Extra memory deallocated, size: %ld\n", *pSz);
+	//printf("Extra memory deallocated, size: %ld\n", *pSz);
 	free((size_t*)ptr - 1);
 }
 
@@ -27,10 +27,54 @@ size_t Size(void* ptr)
 	return ((size_t*)ptr)[-1];
 }
 
+
+void merge(int arr[],int l, int m, int r){
+	int* temp1 = Alloc((m-l+1)*sizeof(int));
+	int* temp2 = Alloc((r-m)*sizeof(int));
+	for(int i = 0;i<m-l+1;i++){
+		temp1[i] = arr[l+i];
+	}
+	for(int i = 0;i<r-m;i++){
+		temp2[i] = arr[m+1+i];
+	}
+	int x =l;
+	int k = 0;
+	int d = 0;
+	while(k<m-l+1&&d<r-m){
+		if(temp1[k]<=temp2[d]){
+			arr[x] = temp1[k];
+			k++;
+		}else{
+			arr[x] = temp2[d];
+			d++;
+		}
+		x++;
+	}
+	while(k<m-l+1){
+		arr[x] = temp1[k];
+		x++;
+		k++;
+	}
+	while(d<r-m){
+		arr[x] = temp2[d];
+		x++;
+		d++;
+	}
+	DeAlloc(temp1);
+	DeAlloc(temp2);
+}
+
 // implement merge sort
 // extraMemoryAllocated counts bytes of extra memory allocated
 void mergeSort(int pData[], int l, int r)
 {
+
+	if(l<r){
+	int m = (l+r)/2;
+	mergeSort(pData,l,m);
+	mergeSort(pData,m+1,r);
+	merge(pData,l,m,r);
+	}
 }
 
 // parses input file to an integer array
@@ -67,9 +111,10 @@ int parseData(char *inputFileName, int **ppData)
 // prints first and last 100 items in the data array
 void printArray(int pData[], int dataSz)
 {
-	int i, sz = dataSz - 100;
+	int i, sz = (dataSz > 100 ? dataSz - 100 : 0);
+	int firstHundred = (dataSz < 100 ? dataSz : 100);
 	printf("\tData:\n\t");
-	for (i=0;i<100;++i)
+	for (i=0;i<firstHundred;++i)
 	{
 		printf("%d ",pData[i]);
 	}
@@ -88,7 +133,6 @@ int main(void)
 	int i;
     double cpu_time_used;
 	char* fileNames[] = { "input1.txt", "input2.txt", "input3.txt", "input4.txt" };
-	
 	for (i=0;i<4;++i)
 	{
 		int *pDataSrc, *pDataCopy;
